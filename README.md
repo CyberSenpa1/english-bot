@@ -29,7 +29,7 @@
 
 1. Клонируйте репозиторий:  
    ```bash
-   git clone https://github.com/yourusername/vocabmaster-bot.git
+   git clone https://github.com/CyberSenpa1/English-bot.git
    cd vocabmaster-bot
 ```
 
