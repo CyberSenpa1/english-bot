@@ -1,4 +1,4 @@
-# VocabMaster Telegram Bot  
+# English Telegram Bot  
 
 📚 **Умный бот для изучения английских слов** | **Smart English Vocabulary Trainer**  
 
@@ -29,8 +29,8 @@
 
 1. Клонируйте репозиторий:  
    ```bash
-   git clone https://github.com/CyberSenpa1/English-bot.git
-   cd vocabmaster-bot
+   git clone https://github.com/CyberSenpa1/english-bot.git
+   cd English-bot
 ```
 
 2. Установите зависимости:
