@@ -25,18 +25,15 @@
 ### Требования | Requirements  
 - Python 3.10+  
 - Telegram Bot API Token (получить у [@BotFather](https://t.me/BotFather))  
-- Redis (для хранения прогресса пользователей)
 
 1. Клонируйте репозиторий:  
-   ```bash
+```bash
    git clone https://github.com/CyberSenpa1/english-bot.git
    cd English-bot
 ```
 
 2. Установите зависимости:
-
 ```bash
-
 pip install -r requirements.txt
 ```
 
