@@ -29,7 +29,7 @@
 1. Клонируйте репозиторий:  
 ```bash
    git clone https://github.com/CyberSenpa1/english-bot.git
-   cd English-bot
+   cd english-bot
 ```
 
 2. Установите зависимости:
