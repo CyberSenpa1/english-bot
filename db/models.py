@@ -1,5 +1,5 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, DateTime, BigInteger, Text, ForeignKey, Sequence, Float, func, VARCHAR,\
-                       TIMESTAMP, BOOLEAN, Index, UniqueConstraint
+                       TIMESTAMP, BOOLEAN, Index, UniqueConstraint, Computed
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.schema import UniqueConstraint
 
@@ -74,10 +74,11 @@ user_statistics = Table(
     Column("last_active", DateTime),
     Column("total_correct", Integer, default=0),
     Column("total_wrong", Integer, default=0),
-    Column("accuracy", Float, computed="total_correct::float / NULLIF(total_correct + total_wrong, 0)"),
+    Column("accuracy", Float, Computed("total_correct::float / NULLIF(total_correct + total_wrong, 0)")),
     Column("daily_progress", JSONB),
     comment="Статистика по пользователям"
 )
+
 
 # Таблица для хранения статистики ответов
 answer_logs = Table(
