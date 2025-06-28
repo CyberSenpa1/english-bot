@@ -7,6 +7,7 @@ from os import getenv
 from redis.asyncio import Redis
 from typing import AsyncGenerator
 import logging
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +43,11 @@ async_session = sessionmaker(
 )
 
 async def init_db():
-    import logging
+    from .models import metadata
     logger = logging.getLogger(__name__)
     logger.warning("!!! ВЫЗОВ init_db() !!!")
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm;"))
         logger.info("Creating all database tables if not exist...")
         await conn.run_sync(metadata.create_all)
         logger.info("Tables checked/created successfully")
