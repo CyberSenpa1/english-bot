@@ -3,10 +3,10 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
 
-from handlers import user_handlers
+from handlers import user_handlers, admin_handlers
+from handlers.admin_handlers import notify_admins_on_start
 from db.core import init_db, get_redis, close_redis
 
 from os import getenv
@@ -55,12 +55,15 @@ async def main():
         # Инициализация бота
         bot = Bot(token=getenv("BOT_TOKEN"))
 
+        await notify_admins_on_start(bot)
+
         # Инициализация хранилища FSM
         redis = await get_redis()
         storage = RedisStorage(redis)
 
         # Создание диспетчера
         dp = Dispatcher(storage=storage)
+        dp.include_router(admin_handlers.router)
         dp.include_router(user_handlers.router)
 
         # Удаляем вебхук и запускаем поллинг
