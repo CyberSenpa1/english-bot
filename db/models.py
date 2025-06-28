@@ -1,5 +1,5 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, DateTime, BigInteger, Text, ForeignKey, Sequence, Float, func, VARCHAR, TIMESTAMP, BOOLEAN, Index,\
-    PrimaryKeyConstraint, UniqueConstraint
+from sqlalchemy import MetaData, Table, Column, Integer, String, DateTime, BigInteger, Text, ForeignKey, Sequence, Float, func, VARCHAR,\
+                       TIMESTAMP, BOOLEAN, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.schema import UniqueConstraint
 
@@ -23,13 +23,8 @@ words = Table(
     Column("id", BigInteger, Sequence('word_id_seq'), primary_key=True),
     Column("english", String(128), unique=True, nullable=False),
     Column("russian", String(128), nullable=False),
-    Column("part_of_speech", String(32)),  # noun/verb/adjective/etc
-    Column("definition", Text),
-    Column("example", Text),
-    Column("topics", VARCHAR(32), default={}),
     Column("added_date", DateTime, server_default='now()'),
     Column("difficulty_level", Integer, default=1, index=True), # Уровень сложности от 1 до 5
-    Column("part_of_speech", String(32), index=True),
     Index('idx_words_english', 'english', postgresql_using='gin',  
           postgresql_ops={'english': 'gin_trgm_ops'}),  # Для быстрого поиска
     comment="Словарь английских слов"
@@ -118,34 +113,4 @@ srs_settings = Table(
     Column("max_reviews_per_day", Integer, default=50, comment="Максимальное количество повторений слов в день"),
     Column("initial_easy_factor", Float, default=2.5, comment="Начальный коэффициент легкости для новых слов"),
     Column("interval_modifier", Float, default=1.0, comment="Модификатор интервала для слов"),
-)
-
-
-# Таблица для хранения категорий слов
-categories = Table(
-    "categories",
-    metadata,
-    Column("id", BigInteger, Sequence('category_id_seq'), primary_key=True),
-    Column("name", String(64), unique=True, nullable=False),
-    Column("description", Text),
-    comment="Категории слов для группировки"
-)
-
-# Таблица для связи слов с категориями
-word_categories = Table(
-    "word_categories",
-    metadata,
-    Column("id", BigInteger, Sequence('word_category_id_seq'), primary_key=True),
-    Column("word_id", BigInteger, ForeignKey("words.id", ondelete="CASCADE"), index=True),
-    Column("category_id", BigInteger, ForeignKey("categories.id", ondelete="CASCADE"), index=True),
-    UniqueConstraint('word_id', 'category_id', name='uq_word_category'),
-    comment="Связь слов с категориями"
-)
-
-word_topics = Table(
-    "word_topics",
-    metadata,
-    Column("word_id", BigInteger, ForeignKey("words.id")),
-    Column("topic", String(64)),  # 'IT', 'Business', 'Travel'
-    PrimaryKeyConstraint('word_id', 'topic')
 )
