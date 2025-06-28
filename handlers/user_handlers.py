@@ -23,3 +23,4 @@ async def cmd_start(message: Message, state: FSMContext):
         else:
             await message.answer("Вы уже зарегистрированы. Добро пожаловать обратно!")
     await state.clear()
+
