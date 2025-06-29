@@ -5,9 +5,12 @@ from contextlib import asynccontextmanager
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 
-from handlers import user_handlers, admin_handlers
+from handlers import user_handlers, admin_handlers, trainer, user_stats, user_settings
 from handlers.admin_handlers import notify_admins_on_start
-from db.core import init_db, get_redis, close_redis, download_words
+from db.core import init_db, download_words
+
+from middlewares.redis import RedisMiddleware
+from db.core import get_redis
 
 from os import getenv
 
@@ -40,7 +43,6 @@ async def on_shutdown(dispatcher: Dispatcher):
     """Действия при остановке бота"""
     try:
         await dispatcher.emit_shutdown()
-        await close_redis()
         logger.info("Ресурсы успешно освобождены")
     except Exception as e:
         logger.error(f"Ошибка при остановке: {e}")
@@ -70,9 +72,22 @@ async def main():
         redis = await get_redis()
         storage = RedisStorage(redis)
 
+
         # Создание диспетчера
         dp = Dispatcher(storage=storage)
-        dp.include_routers(admin_handlers.router, user_handlers.router)
+
+        # Подключаем middleware для redis
+        dp.message.middleware(RedisMiddleware(redis))
+        dp.callback_query.middleware(RedisMiddleware(redis))
+
+        
+        dp.include_routers(
+            admin_handlers.router,
+            user_handlers.router,
+            trainer.router,
+            user_stats.router,
+            user_settings.router
+            )
         
         # Удаляем вебхук и запускаем поллинг
         await bot.delete_webhook(drop_pending_updates=True)
