@@ -63,9 +63,8 @@ async def main():
 
         # Создание диспетчера
         dp = Dispatcher(storage=storage)
-        dp.include_router(admin_handlers.router)
-        dp.include_router(user_handlers.router)
-
+        dp.include_routers(admin_handlers.router, user_handlers.router)
+        
         # Удаляем вебхук и запускаем поллинг
         await bot.delete_webhook(drop_pending_updates=True)
         logger.info("Starting polling...")
