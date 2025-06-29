@@ -1,13 +1,16 @@
 from aiogram import types, Router, Bot
-from aiogram.filters import Command
+from aiogram.filters import Command, Filter
 from aiogram.enums import ParseMode
 from admins import admins_id
 
 router = Router()
 
 
+class IsAdmin(Filter):
+    async def __call__(self, message: types.Message) -> bool:
+        return message.from_user.id in admins_id.values()
 
-@router.message(Command("start"))
+@router.message(Command("admin"), IsAdmin())
 async def admin_start(message: types.Message):
     """
     Обработчик команды /start для администраторов.
