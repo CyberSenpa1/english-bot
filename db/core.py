@@ -2,15 +2,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy import text, insert
+from sqlalchemy import text
 from os import getenv
-from redis.asyncio import Redis
 from typing import AsyncGenerator
 import logging
-import pandas as pd
 import csv
 from db.models import words, metadata
-import asyncio
+import redis.asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 
@@ -67,37 +65,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     finally:
         await session.close()
 
-# Redis клиент с повторными попытками подключения
-async def create_redis_client():
-    """Создает клиент Redis с обработкой ошибок"""
-    return Redis(
-        host=getenv("REDIS_HOST", "redis"),
-        port=int(getenv("REDIS_PORT", 6379)),
-        db=int(getenv("REDIS_DB", 0)),
-        decode_responses=True,
-        socket_timeout=5,
-        socket_connect_timeout=5,
-        retry_on_timeout=True,
-        health_check_interval=30
-    )
-
-redis_client = None
-
-async def get_redis() -> Redis:
-    """Получает клиент Redis с проверкой подключения"""
-    global redis_client
-    if not redis_client:
-        redis_client = await create_redis_client()
-    
-    try:
-        await redis_client.ping()
-        return redis_client
-    except Exception as e:
-        logger.error(f"Redis connection error: {e}")
-        # Попытка переподключения
-        redis_client = await create_redis_client()
-        return redis_client
-
 async def close_redis():
     """Корректно закрывает соединение с Redis"""
     global redis_client
@@ -140,3 +107,9 @@ async def download_words():
                 await conn.execute(stmt)
             logger.info(f"Rows to insert: {len(rows)}")
         logger.info("Words downloaded and inserted into the database")
+
+async def get_redis():
+    redis_host = getenv("REDIS_HOST", "redis")
+    redis_port = int(getenv("REDIS_PORT", 6379))
+    redis_db = int(getenv("REDIS_DB", 0))
+    return aioredis.Redis(host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
