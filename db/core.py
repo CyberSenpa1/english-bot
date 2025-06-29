@@ -1,13 +1,16 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from sqlalchemy import text
-from .models import metadata
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy import text, insert
 from os import getenv
 from redis.asyncio import Redis
 from typing import AsyncGenerator
 import logging
 import pandas as pd
+import csv
+from db.models import words, metadata
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +123,20 @@ async def some_async_function(user_id):
         else:
             logger.info("Пользователь найден, обновляем данные")
             # Логика обновления данных существующего пользователя
+
+async def download_words():
+    logger.info("=== ЗАПУСК download_words ===")
+    async with engine.begin() as conn:
+        with open("db/words.csv", "r") as file:
+            csv_reader = csv.DictReader(file, skipinitialspace=True)
+            rows = []
+            for row in csv_reader:
+                row['difficulty_level'] = int(row['difficulty_level'].strip())
+                row['english'] = row['english'].strip()
+                row['russian'] = row['russian'].strip()
+                rows.append(row)
+            if rows:
+                stmt = pg_insert(words).values(rows).on_conflict_do_nothing(index_elements=['english'])
+                await conn.execute(stmt)
+            logger.info(f"Rows to insert: {len(rows)}")
+        logger.info("Words downloaded and inserted into the database")
