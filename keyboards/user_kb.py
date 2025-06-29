@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 
 start_kb = ReplyKeyboardMarkup(keyboard=[
@@ -27,3 +27,10 @@ difficult = ReplyKeyboardMarkup(keyboard=[
 statistic_kb = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="Назад")]
 ])
+
+def get_trainer_keyboard(options):
+    keyboard = [
+        [InlineKeyboardButton(text=opt, callback_data=opt)] for opt in options
+    ]
+    keyboard.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
