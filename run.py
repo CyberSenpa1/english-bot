@@ -7,7 +7,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 
 from handlers import user_handlers, admin_handlers
 from handlers.admin_handlers import notify_admins_on_start
-from db.core import init_db, get_redis, close_redis
+from db.core import init_db, get_redis, close_redis, download_words
 
 from os import getenv
 
@@ -28,6 +28,13 @@ async def on_startup(dispatcher: Dispatcher):
     except Exception as e:
         logger.error(f"Ошибка при инициализации БД: {e}", exc_info=True)
         raise
+    try:
+        await download_words()
+        logger.info("Слова успешно загружены в базу данных")
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке слов: {e}", exc_info=True)
+        raise
+        
 
 async def on_shutdown(dispatcher: Dispatcher):
     """Действия при остановке бота"""
@@ -51,6 +58,8 @@ async def main():
         # Инициализация базы данных
         await init_db()
         logger.info("База данных инициализирована")
+        await download_words()
+        logger.info("Слова успешно загружены в базу данных")
 
         # Инициализация бота
         bot = Bot(token=getenv("BOT_TOKEN"))
