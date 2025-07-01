@@ -1,0 +1,70 @@
+---
+- name: Установка Docker, Docker Compose и Python
+  hosts: servers
+  become: yes
+  gather_facts: true
+  remote_user: root
+
+  tasks:
+    # Установка базовых зависимостей
+    - name: Установка необходимых пакетов
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - python3-pip
+      when: ansible_os_family == "Debian"
+
+    # Убедимся, что pip3 установлен
+    - name: Проверка установки pip3
+      command: pip3 --version
+      register: pip_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Установка pip3 (если не установлен)
+      apt:
+        name: python3-pip
+        state: present
+      when: pip_check is failed
+
+    # Установка Docker
+    - name: Добавление Docker GPG ключа
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Добавление Docker репозитория
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Установка Docker CE
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+      when: ansible_os_family == "Debian"
+
+    # Установка Docker Compose
+    - name: Установка Docker Compose (бинарный метод)
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      register: download_compose
+
+    - name: Проверка установки Docker Compose
+      command: docker-compose --version
+      register: compose_check
+      changed_when: false
+
+    # Остальные задачи...
