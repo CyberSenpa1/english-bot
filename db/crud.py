@@ -7,7 +7,7 @@ from datetime import datetime
 async def get_user(session: AsyncSession, user_id: int):
     """Получить пользователя по user_id."""
     result = await session.execute(select(users).where(users.c.user_id == user_id))
-    return result.scalar_one_or_none()
+    return result.mappings().first()
 
 async def add_user(session: AsyncSession, user_id: int, username: str, first_name: str):
     """Добавить нового пользователя."""
@@ -15,7 +15,7 @@ async def add_user(session: AsyncSession, user_id: int, username: str, first_nam
         user_id=user_id,
         username=username,
         first_name=first_name,
-        reg_date=datetime.utcnow()
+        reg_date=datetime.now()
     )
     await session.execute(new_user)
     await session.commit()
