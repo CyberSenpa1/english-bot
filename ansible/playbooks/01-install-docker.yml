@@ -1,8 +1,8 @@
 ---
-- name: Установка Docker, Docker Compose и Python
-  hosts: servers
-  become: yes
-  gather_facts: true
+- name: Установка Docker, Docker Compose и Python # Описание плейбука
+  hosts: servers # С какими серверами работать
+  become: yes # Выполнять с правами root
+  gather_facts: true # Для определения ОС
   remote_user: root
 
   tasks:
@@ -67,4 +67,14 @@
       register: compose_check
       changed_when: false
 
-    # Остальные задачи...
+    - name: Запуск и включение Docker сервиса
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Проверка доступности Docker демона
+      ansible.builtin.command: docker info
+      register: docker_check
+      changed_when: false
+      ignore_errors: yes
