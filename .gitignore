@@ -39,3 +39,4 @@ build/
 *.mypy_cache/
 *.pytest_cache/
 admins.py
+inventory.ini
