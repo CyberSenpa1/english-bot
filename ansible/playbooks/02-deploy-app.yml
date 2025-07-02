@@ -1,0 +1,69 @@
+---
+- name: Дэплой проекта
+  hosts: servers
+  become: yes
+  gather_facts: true
+  remote_user: root
+  vars:
+    project_dir: "/opt/project"
+    compose_file: "docker-compose.yml"
+
+
+  tasks:
+    - name: Создание директории проекта
+      file:
+        path: "{{  project_dir  }}"
+        state: directory
+
+    - name: Стягивание проекта с github
+      git:
+        repo: "git@github.com:CyberSenpa1/english-bot.git"
+        dest: "{{ project_dir }}"
+        key_file: "/root/.ssh/englishbot_github"
+        accept_hostkey: yes
+    
+    - name: Копирование .env файла на сервер
+      copy:
+        src: "/home/valeriy/Рабочий стол/english-bot/.env"
+        dest: "{{ project_dir }}"
+        mode: "0600"
+      notify: Перезапуск сервисов бота
+
+    - name: Копирование файла admins.py на сервер
+      copy:
+        src: "/home/valeriy/Рабочий стол/english-bot/admins.py"
+        dest: "{{ project_dir }}"
+        mode: "0600"
+
+    
+    - name: Проверить наличие docker-compose.yml
+      stat:
+        path: /opt/project/docker-compose.yml
+      register: compose_stat
+
+    - name: Запуск сервисов через Docker Compose
+      ansible.builtin.command: "docker compose up -d --build"
+      args:
+        chdir: "{{ project_dir }}"
+      register: compose_up
+      changed_when: 
+        - "'Creating' in compose_up.stdout"
+        - or "'Starting' in compose_up.stdout"
+        - or "'Building' in compose_up.stdout"
+      when: compose_stat.stat.exists
+
+    - name: Проверка состояния сервиса бота
+      ansible.builtin.command: "docker compose -f {{ project_dir }}/{{ compose_file }} ps -q bot"
+      args:
+        chdir: "{{ project_dir }}"
+      register: bot_status
+      changed_when: false
+      ignore_errors: yes
+      when: compose_stat.stat.exists
+      
+  
+  handlers:
+    - name: Перезапуск сервисов бота
+      ansible.builtin.command: docker compose restart
+      args:
+        chdir: "{{ project_dir }}"
