@@ -9,8 +9,7 @@ from redis.asyncio import Redis
 from keyboards.user_kb import get_trainer_keyboard, start_kb
 import asyncio
 from datetime import datetime
-from db.requests import log_answer, update_user_stats, update_word_progress, remove_difficult_words
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from db.requests import log_answer, update_user_stats, update_word_progress
 
 
 router = Router()
@@ -75,20 +74,19 @@ async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(TrainerState.waiting_for_answer)
 async def check_answer(callback: types.CallbackQuery, state: FSMContext, redis: Redis):
-    start_time = datetime.now()
+    start_time = datetime.now()  # Засекаем время ответа
     
     data = await state.get_data()
     correct_russian = data.get("correct_russian")
     word_id = data.get("correct_word_id")
     session_id = data.get("session_id")
-    user_id = callback.from_user.id
     
     is_correct = callback.data == correct_russian
     
     # Логируем ответ
     response_time = (datetime.now() - start_time).total_seconds()
     await log_answer(
-        user_id=user_id,
+        user_id=callback.from_user.id,
         word_id=word_id,
         is_correct=is_correct,
         mode="quiz",
@@ -96,68 +94,54 @@ async def check_answer(callback: types.CallbackQuery, state: FSMContext, redis: 
         session_id=session_id
     )
     
+    # Обновляем прогресс слова
+    await update_word_progress(
+        user_id=callback.from_user.id,
+        word_id=word_id,
+        is_correct=is_correct
+    )
+    
+    # Обновляем общую статистику
+    await update_user_stats(callback.from_user.id)
+    
+    data = await state.get_data()
+    correct_russian = data.get("correct_russian")
+    user_id = callback.from_user.id
     async with async_session() as session:
-        # Получаем правильное слово из базы для отображения
-        result = await session.execute(words.select().where(words.c.id == word_id))
-        correct_word = result.fetchone()
-        
         # Обновляем статистику
+        word_id = data.get("correct_word_id")
         result = await session.execute(
             user_words.select().where(
                 (user_words.c.user_id == user_id) & (user_words.c.word_id == word_id)
             )
         )
-        user_word = result.fetchone()
-        
+        user_word = result.mappings().one_or_none()  # <-- исправлено!
         if user_word:
-            new_wrong_attempts = user_word.wrong_attempts + (0 if is_correct else 1)
             upd = user_words.update().where(
                 (user_words.c.user_id == user_id) & (user_words.c.word_id == word_id)
-            ).values(
-                correct_attempts=user_word.correct_attempts + (1 if is_correct else 0),
-                wrong_attempts=new_wrong_attempts
             )
+            if callback.data == correct_russian:
+                upd = upd.values(correct_attempts=user_word["correct_attempts"] + 1)
+            else:
+                upd = upd.values(wrong_attempts=user_word["wrong_attempts"] + 1)
             await session.execute(upd)
         else:
-            new_wrong_attempts = 0 if is_correct else 1
             ins = user_words.insert().values(
                 user_id=user_id,
                 word_id=word_id,
-                correct_attempts=1 if is_correct else 0,
-                wrong_attempts=new_wrong_attempts
+                correct_attempts=1 if callback.data == correct_russian else 0,
+                wrong_attempts=0 if callback.data == correct_russian else 1
             )
             await session.execute(ins)
-        
         await session.commit()
-        
-        # Проверяем и удаляем сложные слова после коммита
-        if new_wrong_attempts > 3:  # порог для удаления
-            removed_count = await remove_difficult_words(user_id, word_id)
-            if removed_count:
-                await callback.message.answer(
-                    f"🗑 Слово <b>{correct_word.english}</b> было удалено из вашего словаря, "
-                    "так как вызвало много ошибок. Вы можете добавить его снова позже.",
-                    parse_mode="HTML"
-                )
-    
     try:
         await callback.message.delete()
     except:
         pass
 
-    if is_correct:
-        msg = await callback.message.answer(
-            "✅ <b>Правильно!</b>\n"
-            f"<code>{correct_word.english}</code> = {correct_word.russian}",
-            parse_mode="HTML"
-        )
+    if callback.data == correct_russian:
+        msg = await callback.message.answer("✅ Верно!")
     else:
-        msg = await callback.message.answer(
-            "❌ <b>Ошибка!</b>\n"
-            f"Вы выбрали: <s>{callback.data}</s>\n"
-            f"Правильный ответ: <code>{correct_word.english}</code> = {correct_word.russian}",
-            parse_mode="HTML"
-        )
-    
-    await callback.answer()
+        msg = await callback.message.answer(f"❌ Неверно! Правильный ответ: {correct_russian}")
+    # Показываем следующий вопрос
     await start_training(callback.message, state, redis)
