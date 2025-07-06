@@ -11,14 +11,10 @@
 ## ✨ Возможности | Features  
 
 - 📌 **Адаптивные повторения** – Бот учитывает ваши ошибки и чаще показывает сложные слова.  
-- 📚 **Разные режимы** – Выбор перевода, угадывание слова по определению и др.  
 - 📊 **Прогресс и статистика** – Отслеживайте, сколько слов вы уже выучили.  
-- 🔄 **Гибкие настройки** – Можно менять частоту повторений, сложность и темы.  
 
 - 📌 **Adaptive repetitions** – The bot prioritizes words you struggle with.  
-- 📚 **Multiple modes** – Translation quiz, definition matching, etc.  
-- 📊 **Progress tracking** – See how many words you’ve mastered.  
-- 🔄 **Customizable settings** – Adjust repetition intervals and difficulty.  
+- 📊 **Progress tracking** – See how many words you’ve mastered.   
 
 ## 🛠 Установка и запуск | Installation  
 
