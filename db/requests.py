@@ -156,3 +156,15 @@ async def get_problem_words(user_id: int, limit: int = 5):
             .limit(limit)
         )
         return result.mappings().all()
+    
+async def remove_difficult_words(user_id: int, word_id: int) -> int:
+    async with async_session() as session:
+        result = await session.execute(
+            user_words.delete().where(
+                (user_words.c.user_id == user_id) & 
+                (user_words.c.word_id == word_id) &
+                (user_words.c.wrong_attempts > 5)
+            )
+        )
+        await session.commit()
+        return result.rowcount  # возвращаем количество удаленных строк
