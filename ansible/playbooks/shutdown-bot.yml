@@ -1,0 +1,20 @@
+---
+- name: Выключение и удаление контейнеров Docker Compose
+  hosts: servers
+  become: yes
+  gather_facts: true
+  remote_user: root
+  vars:
+    project_dir: "/opt/project"
+
+
+  tasks:
+    - name: Выключение и удвление контейнеров
+      ansible.builtin.command:  "docker compose down"
+      args:
+        chdir: "{{ project_dir }}"
+      register: "compose_down"
+  
+        
+
+      
