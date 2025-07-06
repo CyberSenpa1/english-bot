@@ -7,6 +7,10 @@ from db.models import words, user_words
 import random
 from redis.asyncio import Redis
 from keyboards.user_kb import get_trainer_keyboard, start_kb
+import asyncio
+from datetime import datetime
+from db.requests import log_answer, update_user_stats, update_word_progress
+
 
 router = Router()
 
@@ -38,7 +42,7 @@ async def get_words_for_user(user_id, session, limit=10):
     return words_list
 
 
-@router.message(Command("train"))
+@router.message(F.text.lower() == "изучение английского")
 async def start_training(message: types.Message, state: FSMContext, redis):
     await redis.set("test", "value")
     async with async_session() as session:
@@ -70,6 +74,36 @@ async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(TrainerState.waiting_for_answer)
 async def check_answer(callback: types.CallbackQuery, state: FSMContext, redis: Redis):
+    start_time = datetime.now()  # Засекаем время ответа
+    
+    data = await state.get_data()
+    correct_russian = data.get("correct_russian")
+    word_id = data.get("correct_word_id")
+    session_id = data.get("session_id")
+    
+    is_correct = callback.data == correct_russian
+    
+    # Логируем ответ
+    response_time = (datetime.now() - start_time).total_seconds()
+    await log_answer(
+        user_id=callback.from_user.id,
+        word_id=word_id,
+        is_correct=is_correct,
+        mode="quiz",
+        response_time=response_time,
+        session_id=session_id
+    )
+    
+    # Обновляем прогресс слова
+    await update_word_progress(
+        user_id=callback.from_user.id,
+        word_id=word_id,
+        is_correct=is_correct
+    )
+    
+    # Обновляем общую статистику
+    await update_user_stats(callback.from_user.id)
+    
     data = await state.get_data()
     correct_russian = data.get("correct_russian")
     user_id = callback.from_user.id
@@ -100,11 +134,20 @@ async def check_answer(callback: types.CallbackQuery, state: FSMContext, redis: 
             )
             await session.execute(ins)
         await session.commit()
-    if callback.data == correct_russian:
-        await callback.message.answer("✅ Верно!")
-    else:
-        await callback.message.answer(f"❌ Неверно! Правильный ответ: {correct_russian}")
-    await callback.answer()
+    try:
+        await callback.message.delete()
+    except:
+        pass
 
-    # Показываем следующий вопрос (без сброса состояния)
+    if callback.data == correct_russian:
+        msg = await callback.message.answer("✅ Верно!")
+    else:
+        msg = await callback.message.answer(f"❌ Неверно! Правильный ответ: {correct_russian}")
+        await asyncio.sleep(3)
+    try:
+        await msg.delete()
+    except:
+        pass
+
+    # Показываем следующий вопрос
     await start_training(callback.message, state, redis)
