@@ -141,9 +141,10 @@ async def check_answer(callback: types.CallbackQuery, state: FSMContext, redis: 
 
     if callback.data == correct_russian:
         msg = await callback.message.answer("✅ Верно!")
+        await asyncio.sleep(2)
     else:
         msg = await callback.message.answer(f"❌ Неверно! Правильный ответ: {correct_russian}")
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
     try:
         await msg.delete()
     except:
