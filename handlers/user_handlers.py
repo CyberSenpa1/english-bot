@@ -25,3 +25,14 @@ async def cmd_start(message: Message, state: FSMContext):
             await message.answer("Вы уже зарегистрированы. Добро пожаловать обратно!", reply_markup=start_kb)
     await state.clear()
 
+@router.message(F.text.lower() == "о нас")
+async def cmd_about_us(message: Message):
+    await message.answer("Ссылка на проект:https://github.com/CyberSenpa1/english-bot")
+
+@router.message(F.text.lower() == "поддержать автора")
+async def support_author(message: Message):
+    await message.answer(f"<b>BTC</b>:<u><code>1Nyu72SD2iHVh7a1W36cWpufoF2GJYGvfZ</code></u>\n"
+                          f"<b>TON</b>:<u><code>UQAEMK1JJFmCe4ZEGsoX_cjGuRztDn7y63DPo_-bU5uHseBg</code></u>", parse_mode="HTML")
+    
+
+
