@@ -1,22 +1,37 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from db.core import async_session
 from db.models import user_statistics
+from keyboards.user_kb import start_kb
+from db.models import answer_logs
+from sqlalchemy import select
+from db.requests import get_problem_words
 
 router = Router()
 
-@router.message(lambda m: m.text == "Статистика")
+@router.message(F.text.lower() == "статистика")
 async def show_stats(message: types.Message):
     async with async_session() as session:
-        result = await session.execute(
-            user_statistics.select().where(user_statistics.c.user_id == message.from_user.id)
+        # Основная статистика
+        stats = await session.execute(
+            select(user_statistics)
+            .where(user_statistics.c.user_id == message.from_user.id)
         )
-        stats = result.scalar_one_or_none()
-    if not stats:
-        await message.answer("Статистика пока не доступна.")
-        return
-    await message.answer(
-        f"Выучено слов: {stats.learned_words}\n"
-        f"Всего слов: {stats.total_words}\n"
-        f"Текущий стрик: {stats.streak}\n"
-        f"Точность: {round(stats.accuracy * 100, 2) if stats.accuracy else 0}%"
-    )
+        stats = stats.mappings().one_or_none()
+        
+        # Проблемные слова
+        problem_words = await get_problem_words(message.from_user.id)
+        
+        # Формируем сообщение
+        text = (
+            f"📊 <b>Ваша статистика</b>\n\n"
+            f"🎯 Выучено слов: {stats['learned_words']}/{stats['total_words']}\n"
+            f"📈 Точность: {stats['accuracy']*100:.1f}%\n"
+            f"🔥 Серия дней: {stats['streak']}\n\n"
+            f"🔄 Последняя активность: {stats['last_active'].strftime('%d.%m.%Y')}\n\n"
+            f"⚠️ <b>Сложные слова:</b>\n"
+        )
+        
+        for word in problem_words:
+            text += f"- {word['english']} ({word['wrong_attempts']} ошибок)\n"
+        
+        await message.answer(text, parse_mode="HTML")
