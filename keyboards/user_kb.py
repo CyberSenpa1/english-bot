@@ -4,7 +4,8 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 start_kb = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Изучение английского')],
     [KeyboardButton(text='Статистика')],
-    [KeyboardButton(text='О нас')]
+    [KeyboardButton(text='О нас')],
+    [KeyboardButton(text='Поддержать автора')],
 ], resize_keyboard=True, one_time_keyboard=True
 )
 
