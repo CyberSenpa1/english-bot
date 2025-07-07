@@ -19,7 +19,7 @@
 ## 🛠 Установка и запуск | Installation  
 
 ### Требования | Requirements  
-- Python 3.10+  
+- Python 3.12  
 - Telegram Bot API Token (получить у [@BotFather](https://t.me/BotFather))  
 
 1. Клонируйте репозиторий:  
@@ -36,10 +36,23 @@ pip install -r requirements.txt
 3. Настройте бота:
   Создайте .env файл и добавьте:
 ```
-TELEGRAM_TOKEN=ваш_токен
+BOT_TOKEN=<Bot_token>
+POSTGRES_PASSWORD=<Postgres_password>
+DATABASE_URL=engine://user:password@host/db
+POSTGRES_USER=<user>
+POSTGRES_DB=<db>
+POSTGRES_HOST=<host>
+POSTGRES_PORT=<port>
+REDIS_HOST=<host>
+REDIS_PORT=<port>
+REDIS_DB=0
+REDIS_PASSWORD=<redis_password>
+REDIS_URL=<redis_url>
+REDIS_DECODE_RESPONSES=True
+REDIS_ENCODING=utf-8
 ```
 
 5. Запустите бота:
 ```bash
-python run.py
+docker compose up --build
 ```
