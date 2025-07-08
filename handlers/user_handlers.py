@@ -20,9 +20,9 @@ async def cmd_start(message: Message, state: FSMContext):
         existing_user = await get_user(session, user_id)
         if existing_user is None:
             await add_user(session, user_id, username, first_name)
-            await message.answer("Добро пожаловать!\n Вы успешно зарегистрированы.", reply_markup=start_kb)
+            await message.answer("Добро пожаловать!\nВы успешно зарегистрированы.", reply_markup=start_kb)
         else:
-            await message.answer("Вы уже зарегистрированы.\n Добро пожаловать обратно!", reply_markup=start_kb)
+            await message.answer("Вы уже зарегистрированы.\nДобро пожаловать обратно!", reply_markup=start_kb)
     await state.clear()
 
 @router.message(F.text.lower() == "о нас")
