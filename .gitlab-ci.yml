@@ -44,6 +44,18 @@ test_job2:
         paths:
             - $LOG_FILE_NAME
 
+test_job3:
+    stage: stage_test
+    script:
+        - echo "---Test3 Started---"
+        - echo "Testing3..." >> $LOG_FILE_NAME
+        - echo "---Test3 Completed---"
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+
+
+
 deploy_to_dev_job:
     stage: stage_deploy
     script:
