@@ -60,7 +60,7 @@ deploy_to_dev_job:
     stage: stage_deploy
     script:
         - echo "---Deploy to DEV Started---"
-        - echo "Deploy to DEV..." >>> $LOG_FILE_NAME
+        - echo "Deploy to DEV..." >> $LOG_FILE_NAME
         - echo "---Deploy to DEV Completed---"
         - cat $LOG_FILE_NAME
     artifacts:
