@@ -101,6 +101,7 @@ async def download_words():
                 row['difficulty_level'] = int(row['difficulty_level'].strip())
                 row['english'] = row['english'].strip()
                 row['russian'] = row['russian'].strip()
+                row['part_of_speech'] = row['part_of_speech'].strip()
                 rows.append(row)
             if rows:
                 stmt = pg_insert(words).values(rows).on_conflict_do_nothing(index_elements=['english'])
