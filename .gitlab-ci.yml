@@ -1,0 +1,71 @@
+#----------------------------------------
+# Gitlab Ci/CD Pipline Basics
+#
+# Created by Valeriy Simachenkov 2025
+#----------------------------------------
+
+stages:
+  - stage_build
+  - stage_test
+  - stage_deploy
+
+variables:
+    OWNER_NAME     : Valeriy Simachenkov
+    CICD_VERSION   : v1.0
+    LOG_FILE_NAME  : log.txt
+
+build_job:
+    stage: stage_build
+    script:
+        - echo "---Build Started---"
+        - echo "Building..." >> $LOG_FILE_NAME
+        - echo "---Build Completed---"
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+
+test_job1:
+    stage: stage_test
+    script:
+        - echo "---Test1 started---"
+        - echo "Testing1..." >> $LOG_FILE_NAME
+        - echo "---Test1 Completed---"
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+
+test_job2:
+    stage: stage_test
+    script:
+        - echo "---Test2 started---"
+        - echo "Testing2..." >> $LOG_FILE_NAME
+        - echo "---Test2 Completed---"
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+
+test_job3:
+    stage: stage_test
+    needs:
+        - [test_job1, test_job2]
+    script:
+        - echo "---Test3 Started---"
+        - echo "Testing3..." >> $LOG_FILE_NAME
+        - echo "---Test3 Completed---"
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+
+
+
+deploy_to_dev_job:
+    stage: stage_deploy
+    script:
+        - echo "---Deploy to DEV Started---"
+        - echo "Deploy to DEV..." >> $LOG_FILE_NAME
+        - echo "---Deploy to DEV Completed---"
+        - cat $LOG_FILE_NAME
+    artifacts:
+        paths:
+            - $LOG_FILE_NAME
+

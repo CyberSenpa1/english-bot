@@ -33,11 +33,14 @@ async def notify_admins_on_start(bot: Bot):
     """
     Отправляет всем администраторам сообщение о запуске бота.
     """
-    for admin_id in admins_id.values():
-        try:
-            await bot.send_message(
-                admin_id,
-                "Бот успешно запущен и готов к работе! 🚀"
-            )
-        except Exception as e:
-            print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
+    try:
+        for admin_id in admins_id.values():
+            try:
+                await bot.send_message(
+                    admin_id,
+                    "Бот успешно запущен и готов к работе! 🚀"
+                )
+            except Exception as e:
+                print(f"Не удалось отправить сообщение админу {admin_id}: {e}")
+    except Exception as e:
+        print(f"Не удалось импортировать данные из файла admins.py ошибка: {e}")
