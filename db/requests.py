@@ -2,6 +2,7 @@ from db.models import answer_logs, user_words, user_statistics, words
 from sqlalchemy import select, func, insert, update
 from db.core import async_session
 from datetime import datetime, timedelta
+from db.models import users
 
 async def log_answer(
     user_id: int,
@@ -11,17 +12,32 @@ async def log_answer(
     response_time: float,
     session_id: int = None
 ):
-    async with async_session() as session:
-        stmt = answer_logs.insert().values(
-            user_id=user_id,
-            word_id=word_id,
-            session_id=session_id,
-            is_correct=is_correct,
-            mode=mode,
-            response_time=response_time
+    try:
+
+        async with async_session() as session:
+            user_exists = await session.execute(
+            select(1).where(users.c.user_id == user_id)
         )
-        await session.execute(stmt)
-        await session.commit()
+            if not user_exists.scalar():
+                await session.execute(
+                    insert(users)
+                    .values(id=user_id)
+                    .on_conflict_do_nothing(index_elements=['id'])
+                )
+
+
+            stmt = answer_logs.insert().values(
+                user_id=user_id,
+                word_id=word_id,
+                session_id=session_id,
+                is_correct=is_correct,
+                mode=mode,
+                response_time=response_time
+            )
+            await session.execute(stmt)
+            await session.commit()
+    except Exception as e:
+        print(e)
 
 
 async def update_word_progress(
