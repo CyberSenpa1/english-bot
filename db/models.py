@@ -23,6 +23,7 @@ words = Table(
     Column("id", BigInteger, Sequence('word_id_seq'), primary_key=True),
     Column("english", String(128), unique=True, nullable=False),
     Column("russian", String(128), nullable=False),
+    Column("part_of_speech", String(128), nullable=True),
     Column("added_date", DateTime, server_default='now()'),
     Column("difficulty_level", Integer, default=1, index=True), # Уровень сложности от 1 до 5
     Index('idx_words_english', 'english', postgresql_using='gin',  
