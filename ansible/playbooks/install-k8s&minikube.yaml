@@ -1,26 +1,74 @@
 ---
-- name: install k8s and minikube
+- name: Установка k8s, minikube, helm
   hosts: servers
   become: yes
   gather_facts: yes
   remote_user: root
 
   tasks:
-    - name: Установка релиза последней версии
-      shell: |
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" | sh 
-      args:
-        executable: /bin/bash
-      become: yes
-
+    - name: Установка kubectl
+      block:
+        - name: Скачивание kubectl
+          get_url:
+            url: "https://dl.k8s.io/release/{{ lookup('url', 'https://dl.k8s.io/release/stable.txt', split_lines=False) }}/bin/linux/amd64/kubectl"
+            dest: /tmp/kubectl
+            mode: '0755'
     
-    - name: Устеновка kubectl в bin 
-      shell: |
-        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl | sh
-
+        - name: Копирование kubectl в /usr/local/bin
+          copy:
+            src: /tmp/kubectl
+            dest: /usr/local/bin/kubectl
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+            
     - name: Установка minikube
-      shell: |
-        curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64 && 
-        sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64 | sh
+      block:
+        - name: Скачивание minikube
+          get_url:
+            url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+            dest: /tmp/minikube
+            mode: '0755'
+        
+        - name: Установка minikube
+          copy: 
+            src: /tmp/minikube
+            dest: /usr/local/bin/minikube
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+    
+    - name: Установка helm
+      block:
+        - name: Скачивание helm
+          get_url:
+            url: https://get.helm.sh/helm-v3.17.4-linux-amd64.tar.gz
+            dest: /tmp/helm.tar.gz
+            mode: '0755'
 
-      
+        - name: Распаковка helm
+          unarchive:
+            src: /tmp/helm.tar.gz
+            dest: /tmp 
+            remote_src: yes
+        
+        - name: Установка helm
+          copy:
+            src: /tmp/linux-amd64/helm
+            dest: /usr/local/bin/helm
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+    
+    - name: Очистка временных файлов
+      file:
+        path: "tmp/{{ item }}"
+        state: absent
+      loop:
+        - kubectl
+        - minikube
+        - helm.tar.gz
+        - linux-amd64
