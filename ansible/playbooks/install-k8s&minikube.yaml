@@ -1,0 +1,26 @@
+---
+- name: install k8s and minikube
+  hosts: servers
+  become: yes
+  gather_facts: yes
+  remote_user: root
+
+  tasks:
+    - name: Установка релиза последней версии
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" | sh 
+      args:
+        executable: /bin/bash
+      become: yes
+
+    
+    - name: Устеновка kubectl в bin 
+      shell: |
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl | sh
+
+    - name: Установка minikube
+      shell: |
+        curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64 && 
+        sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64 | sh
+
+      
